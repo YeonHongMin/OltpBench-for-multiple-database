@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<parameters>
+	
+    <!-- Connection details -->
+    <dbtype>mysql</dbtype>
+    <driver>com.mysql.cj.jdbc.Driver</driver>
+    <DBUrl>jdbc:mysql://192.168.0.124:3306/prod?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=Asia/Seoul&amp;characterEncoding=UTF-8</DBUrl>
+   <!-- <DBName>prod</DBName> -->
+    <username>scott</username>
+    <password>Welcome1#</password>
+    <terminals>4</terminals>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+
+    <works>
+        <work>
+          <time>180</time>
+          <rate>1000</rate>
+          <weights>45,43,4,4,4</weights>
+        </work>
+        </works>
+
+        <!-- TPCC specific -->  
+        <scalefactor>2</scalefactor>
+        <isolation>TRANSACTION_READ_COMMITTED</isolation>
+        <transactiontypes>
+        <transactiontype>
+                <name>NewOrder</name>
+                <id>1</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Payment</name>
+                <id>2</id>
+        </transactiontype>
+        <transactiontype>
+                <name>OrderStatus</name>
+                <id>3</id>
+        </transactiontype>
+        <transactiontype>
+                <name>Delivery</name>
+                <id>4</id>
+        </transactiontype>
+        <transactiontype>
+                <name>StockLevel</name>
+                <id>5</id>
+        </transactiontype>
+        </transactiontypes>
+</parameters>

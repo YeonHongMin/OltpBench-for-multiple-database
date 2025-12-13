@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>postgres</dbtype>
+    <driver>org.postgresql.Driver</driver>
+    <DBUrl>jdbc:postgresql://192.168.0.131:5432/prod</DBUrl>
+    <username>scott</username>
+    <password>Welcome1#</password>
+    <terminals>4</terminals>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+
+   <works>
+        <work>
+          <time>180</time>
+          <rate>1000</rate>
+          <weights>45,43,4,4,4</weights>
+        </work>
+	</works>
+	
+	<!-- TPCC specific -->  
+   	<scalefactor>2</scalefactor>
+   	<dialect>config/dialects/tpcc_dialects.xml</dialect>
+   	<isolation>TRANSACTION_READ_COMMITTED</isolation>
+   	<transactiontypes>
+    	<transactiontype>
+    		<name>NewOrder</name>
+    		<id>1</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>Payment</name>
+    		<id>2</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>OrderStatus</name>
+    		<id>3</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>Delivery</name>
+    		<id>4</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>StockLevel</name>
+    		<id>5</id>
+    	</transactiontype>
+   	</transactiontypes>
+</parameters>

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<parameters>
+    <dbtype>oracle</dbtype>
+    <driver>oracle.jdbc.driver.OracleDriver</driver>
+    <DBUrl>jdbc:oracle:thin:@192.168.0.172:1521:DEV</DBUrl>
+    <username>app</username>
+    <password>app</password>
+    <terminals>4</terminals>
+    <uploadCode></uploadCode>
+    <uploadUrl></uploadUrl>
+   	
+    <works>
+        <work>
+          <time>600</time>
+          <rate>1000</rate>
+          <weights>45,43,4,4,4</weights>
+        </work>
+	</works>
+	
+	<!-- TPCC specific -->  
+   	<scalefactor>10</scalefactor>
+    <dialect>config/oracle-dialects.xml</dialect>
+   	<isolation>TRANSACTION_READ_COMMITTED</isolation>
+   	<transactiontypes>
+    	<transactiontype>
+    		<name>NewOrder</name>
+    		<id>1</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>Payment</name>
+    		<id>2</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>OrderStatus</name>
+    		<id>3</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>Delivery</name>
+    		<id>4</id>
+    	</transactiontype>
+    	<transactiontype>
+    		<name>StockLevel</name>
+    		<id>5</id>
+    	</transactiontype>
+   	</transactiontypes>
+</parameters>
