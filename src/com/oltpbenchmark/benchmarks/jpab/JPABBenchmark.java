@@ -49,7 +49,7 @@ public class JPABBenchmark extends BenchmarkModule {
         emf = Persistence.createEntityManagerFactory(jpabConf.getPersistanceUnit());
         Test test = null;
         try {
-            test = (Test)Class.forName("com.oltpbenchmark.benchmarks.jpab.tests."+this.jpabConf.getTestName()).newInstance();
+            test = (Test)Class.forName("com.oltpbenchmark.benchmarks.jpab.tests."+this.jpabConf.getTestName()).getDeclaredConstructor().newInstance();
             int totalObjectCount= (int) this.workConf.getScaleFactor();
             test.setBatchSize(1);
             test.setEntityCount(totalObjectCount);

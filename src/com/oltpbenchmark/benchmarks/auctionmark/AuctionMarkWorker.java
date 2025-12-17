@@ -814,9 +814,9 @@ public class AuctionMarkWorker extends Worker<AuctionMarkBenchmark> {
         UserId sellerId = itemInfo.getSellerId();
         double buyer_credit = 0d;
 
-	Integer ip_id_cnt = ip_id_cntrs.get(new Long(encodedItemId));
+	Integer ip_id_cnt = ip_id_cntrs.get(Long.valueOf(encodedItemId));
 	if (ip_id_cnt == null) {
-	    ip_id_cnt = new Integer(0);
+	    ip_id_cnt = Integer.valueOf(0);
 	}
 	
         long ip_id = AuctionMarkUtil.getUniqueElementId(encodedItemId,

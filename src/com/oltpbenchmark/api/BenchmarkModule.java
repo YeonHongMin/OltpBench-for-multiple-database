@@ -103,7 +103,7 @@ public abstract class BenchmarkModule {
     // DATABASE CONNETION
     // --------------------------------------------------------------------------
 
-    private com.zaxxer.hikari.HikariDataSource dataSource = null;
+    private volatile com.zaxxer.hikari.HikariDataSource dataSource = null;
 
     /**
      *
@@ -111,26 +111,92 @@ public abstract class BenchmarkModule {
      * @throws SQLException
      */
     public final Connection makeConnection() throws SQLException {
-        synchronized (this) {
-            if (this.dataSource == null) {
-                com.zaxxer.hikari.HikariConfig config = new com.zaxxer.hikari.HikariConfig();
-                config.setJdbcUrl(workConf.getDBConnection());
-                config.setUsername(workConf.getDBUsername());
-                config.setPassword(workConf.getDBPassword());
-                if (workConf.getDBDriver() != null) {
-                    config.setDriverClassName(workConf.getDBDriver());
+        // Double-checked locking for better performance
+        if (this.dataSource == null) {
+            synchronized (this) {
+                if (this.dataSource == null) {
+                    this.dataSource = createOptimizedDataSource();
                 }
-                // Increase max pool size to accommodate loaders + terminals + extra
-                int poolSize = Math.max(200, workConf.getTerminals() + 50);
-                config.setMaximumPoolSize(poolSize);
-                config.setMinimumIdle(10);
-
-                this.dataSource = new com.zaxxer.hikari.HikariDataSource(config);
             }
         }
         Connection conn = this.dataSource.getConnection();
         Catalog.setSeparator(conn);
         return (conn);
+    }
+
+    /**
+     * Create an optimized HikariCP DataSource for high-throughput workloads
+     */
+    private com.zaxxer.hikari.HikariDataSource createOptimizedDataSource() {
+        com.zaxxer.hikari.HikariConfig config = new com.zaxxer.hikari.HikariConfig();
+
+        // Basic connection settings
+        config.setJdbcUrl(workConf.getDBConnection());
+        config.setUsername(workConf.getDBUsername());
+        config.setPassword(workConf.getDBPassword());
+        if (workConf.getDBDriver() != null) {
+            config.setDriverClassName(workConf.getDBDriver());
+        }
+
+        // Pool sizing - optimized for high throughput
+        int terminals = workConf.getTerminals();
+        int loaderThreads = workConf.getLoaderThreads();
+        int poolSize = Math.max(200, terminals + loaderThreads + 50);
+        int minIdle = Math.max(20, (int)(terminals * 0.3)); // 30% of terminals, minimum 20
+
+        config.setMaximumPoolSize(poolSize);
+        config.setMinimumIdle(minIdle);
+
+        // Connection timeout settings (in milliseconds)
+        config.setConnectionTimeout(30000);      // 30 seconds to get connection
+        config.setValidationTimeout(5000);       // 5 seconds for validation
+        config.setIdleTimeout(600000);           // 10 minutes idle before removal
+        config.setMaxLifetime(1800000);          // 30 minutes max connection lifetime
+
+        // Performance optimizations
+        config.setAutoCommit(false);             // Manual commit for transactions
+        config.setReadOnly(false);
+        config.setIsolateInternalQueries(true);
+
+        // Pool name for monitoring/debugging
+        config.setPoolName("OLTPBench-HikariPool");
+
+        // Leak detection (disabled in production for performance, enable for debugging)
+        // config.setLeakDetectionThreshold(60000); // 60 seconds
+
+        // Database-specific optimizations
+        DatabaseType dbType = workConf.getDBType();
+        if (dbType != null) {
+            switch (dbType) {
+                case MYSQL:
+                    config.addDataSourceProperty("cachePrepStmts", "true");
+                    config.addDataSourceProperty("prepStmtCacheSize", "250");
+                    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+                    config.addDataSourceProperty("useServerPrepStmts", "true");
+                    config.addDataSourceProperty("useLocalSessionState", "true");
+                    config.addDataSourceProperty("rewriteBatchedStatements", "true");
+                    config.addDataSourceProperty("cacheResultSetMetadata", "true");
+                    config.addDataSourceProperty("cacheServerConfiguration", "true");
+                    config.addDataSourceProperty("elideSetAutoCommits", "true");
+                    config.addDataSourceProperty("maintainTimeStats", "false");
+                    break;
+                case POSTGRES:
+                    config.addDataSourceProperty("prepareThreshold", "5");
+                    config.addDataSourceProperty("preparedStatementCacheQueries", "256");
+                    config.addDataSourceProperty("preparedStatementCacheSizeMiB", "5");
+                    break;
+                case ORACLE:
+                    config.addDataSourceProperty("oracle.jdbc.implicitStatementCacheSize", "100");
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        LOG.info(String.format("Creating HikariCP pool: maxSize=%d, minIdle=%d, dbType=%s",
+                poolSize, minIdle, dbType));
+
+        return new com.zaxxer.hikari.HikariDataSource(config);
     }
 
     // --------------------------------------------------------------------------

@@ -1,7 +1,36 @@
 # OLTPBench for Multiple DBMS
+
+**Version: 0.2**
+
 기존 OltpBench가 BenchBase으로 옮겨졌으나 기존 OltpBench의 기능을 유지하기 위해 이 프로젝트를 진행합니다. 특히, Multi-Database에 대한 지원을 추가하기 위해 이 프로젝트를 진행합니다.
 Connection Polling 기능을 추가하여 어떤 에러가 발생해도 재접속 하도록 변경하였습니다.
-- 2025.12.13
+
+### 변경 이력
+- **v0.2** (2025.12.17): 대용량 트랜잭션 성능 최적화 (HikariCP, Lock-free 자료구조, QuickSelect 알고리즘)
+- **v0.1** (2025.12.17): Java 17 이상 버전으로 업그레이드, deprecated API 수정
+- 2025.12.13: 초기 버전
+
+## 성능 최적화 (Performance Optimizations)
+
+이 버전에서는 대용량 트랜잭션 처리를 위한 다음과 같은 성능 최적화가 적용되었습니다:
+
+### 1. HikariCP 커넥션 풀 최적화
+- 동적 풀 크기 설정 (터미널 수 기반)
+- DBMS별 최적화 설정 (MySQL, PostgreSQL, Oracle)
+- PreparedStatement 캐싱 및 배치 처리 최적화
+
+### 2. Lock-free 자료구조 도입
+- `ConcurrentHistogram`: 트랜잭션 카운팅을 위한 Lock-free 히스토그램
+- `ConcurrentLinkedQueue`: 작업 큐의 동기화 오버헤드 제거
+- `AtomicInteger`: 워커 상태 추적을 위한 원자적 카운터
+
+### 3. Exception 처리 최적화
+- 룩업 테이블 기반 O(1) 예외 처리 (기존 if-else 체인 제거)
+- DBMS별 에러 코드 사전 매핑
+
+### 4. 통계 계산 최적화
+- QuickSelect 알고리즘으로 Percentile 계산 (O(N log N) → O(N))
+- 대용량 데이터셋에서 정렬 오버헤드 제거
 
 ## 지원되는 DBMS
 - MySQL
@@ -12,9 +41,9 @@ Connection Polling 기능을 추가하여 어떤 에러가 발생해도 재접�
 - Tibero
 
 ## 사전 요구 사항 (Prerequisites)
-- Java (+1.7, JDK 11+ 권장)
-- Maven (Dependency 관리를 위해 변환됨)
-- 각 DBMS에 대한 JDBC 드라이버 (Maven dependency 또는 lib 폴더에 포함됨)
+- **Java 17 이상** (JDK 17+)
+- Maven 3.6 이상 (Dependency 관리)
+- 각 DBMS에 대한 JDBC 드라이버 (Maven dependency에 포함됨)
 
 ## 프로젝트 빌드
 소스 코드가 수정되었거나 처음 실행하는 경우 Maven을 통해 빌드해야 합니다.

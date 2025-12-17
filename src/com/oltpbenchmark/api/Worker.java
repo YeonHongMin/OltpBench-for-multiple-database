@@ -38,6 +38,7 @@ import com.oltpbenchmark.catalog.Catalog;
 import com.oltpbenchmark.types.DatabaseType;
 import com.oltpbenchmark.types.State;
 import com.oltpbenchmark.types.TransactionStatus;
+import com.oltpbenchmark.util.ConcurrentHistogram;
 import com.oltpbenchmark.util.Histogram;
 import com.oltpbenchmark.util.StringUtil;
 
@@ -60,11 +61,12 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
     protected final Map<String, Procedure> name_procedures = new HashMap<String, Procedure>();
     protected final Map<Class<? extends Procedure>, Procedure> class_procedures = new HashMap<Class<? extends Procedure>, Procedure>();
 
-    private final Histogram<TransactionType> txnSuccess = new Histogram<TransactionType>();
-    private final Histogram<TransactionType> txnAbort = new Histogram<TransactionType>();
-    private final Histogram<TransactionType> txnRetry = new Histogram<TransactionType>();
-    private final Histogram<TransactionType> txnErrors = new Histogram<TransactionType>();
-    private final Map<TransactionType, Histogram<String>> txnAbortMessages = new HashMap<TransactionType, Histogram<String>>();
+    // Using ConcurrentHistogram for lock-free, high-throughput counting
+    private final ConcurrentHistogram<TransactionType> txnSuccess = new ConcurrentHistogram<TransactionType>();
+    private final ConcurrentHistogram<TransactionType> txnAbort = new ConcurrentHistogram<TransactionType>();
+    private final ConcurrentHistogram<TransactionType> txnRetry = new ConcurrentHistogram<TransactionType>();
+    private final ConcurrentHistogram<TransactionType> txnErrors = new ConcurrentHistogram<TransactionType>();
+    private final Map<TransactionType, ConcurrentHistogram<String>> txnAbortMessages = new java.util.concurrent.ConcurrentHashMap<TransactionType, ConcurrentHistogram<String>>();
 
     private boolean seenDone = false;
 
@@ -173,23 +175,27 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
     }
 
     public final Histogram<TransactionType> getTransactionSuccessHistogram() {
-        return (this.txnSuccess);
+        return this.txnSuccess.toHistogram();
     }
 
     public final Histogram<TransactionType> getTransactionRetryHistogram() {
-        return (this.txnRetry);
+        return this.txnRetry.toHistogram();
     }
 
     public final Histogram<TransactionType> getTransactionAbortHistogram() {
-        return (this.txnAbort);
+        return this.txnAbort.toHistogram();
     }
 
     public final Histogram<TransactionType> getTransactionErrorHistogram() {
-        return (this.txnErrors);
+        return this.txnErrors.toHistogram();
     }
 
     public final Map<TransactionType, Histogram<String>> getTransactionAbortMessageHistogram() {
-        return (this.txnAbortMessages);
+        Map<TransactionType, Histogram<String>> result = new HashMap<>();
+        for (Map.Entry<TransactionType, ConcurrentHistogram<String>> entry : this.txnAbortMessages.entrySet()) {
+            result.put(entry.getKey(), entry.getValue().toHistogram());
+        }
+        return result;
     }
 
     synchronized public void setCurrStatement(Statement s) {
@@ -395,11 +401,8 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
 
                     /* PAVLO */
                     if (recordAbortMessages) {
-                        Histogram<String> error_h = this.txnAbortMessages.get(next);
-                        if (error_h == null) {
-                            error_h = new Histogram<String>();
-                            this.txnAbortMessages.put(next, error_h);
-                        }
+                        ConcurrentHistogram<String> error_h = this.txnAbortMessages.computeIfAbsent(
+                            next, k -> new ConcurrentHistogram<String>());
                         error_h.put(StringUtil.abbrv(ex.getMessage(), 20));
                     }
 
@@ -413,96 +416,36 @@ public abstract class Worker<T extends BenchmarkModule> implements Runnable {
                     break;
 
                 // Database System Specific Exception Handling
+                // Using SQLExceptionHandler lookup table for O(1) performance
                 } catch (SQLException ex) {
-                    // TODO: Handle acceptable error codes for every DBMS
-                     if (LOG.isDebugEnabled())
+                    if (LOG.isDebugEnabled())
                         LOG.warn(String.format("%s thrown when executing '%s' on '%s' " +
-                                               "[Message='%s', ErrorCode='%d', SQLState='%s']", 
+                                               "[Message='%s', ErrorCode='%d', SQLState='%s']",
                                                ex.getClass().getSimpleName(), next, this.toString(),
                                                ex.getMessage(), ex.getErrorCode(), ex.getSQLState()), ex);
 
-		    if (this.wrkld.getDBType().shouldUseTransactions()) {
-			if (savepoint != null) {
-			    this.conn.rollback(savepoint);
-			} else {
-			    this.conn.rollback();
-			}
-		    }
-
-                    if (ex.getSQLState() == null) {
-                        continue;
-                    // ------------------
-                    // MYSQL
-                    // ------------------
-                    } else if (ex.getErrorCode() == 1213 && ex.getSQLState().equals("40001")) {
-                        // MySQLTransactionRollbackException
-                        status = TransactionStatus.RETRY;
-                        continue;
-                    } else if (ex.getErrorCode() == 1205 && ex.getSQLState().equals("41000")) {
-                        // MySQL Lock timeout
-                        status = TransactionStatus.RETRY;
-                        continue;
-                        
-                    // ------------------
-                    // SQL SERVER
-                    // ------------------
-                    } else if (ex.getErrorCode() == 1205 && ex.getSQLState().equals("40001")) {
-                        // SQLServerException Deadlock
-                        status = TransactionStatus.RETRY;
-                        continue;
-                    
-                    // ------------------
-                    // POSTGRES
-                    // ------------------
-                    } else if (ex.getErrorCode() == 0 && ex.getSQLState() != null && ex.getSQLState().equals("40001")) {
-                        // Postgres serialization
-                        status = TransactionStatus.RETRY;
-                        continue;
-                    } else if (ex.getErrorCode() == 0 && ex.getSQLState() != null && ex.getSQLState().equals("53200")) {
-                        // Postgres OOM error
-                        throw ex;
-                    } else if (ex.getErrorCode() == 0 && ex.getSQLState() != null && ex.getSQLState().equals("XX000")) {
-                        // Postgres no pinned buffers available
-                        throw ex;
-                        
-                    // ------------------
-                    // ORACLE
-                    // ------------------
-                    } else if (ex.getErrorCode() == 8177 && ex.getSQLState().equals("72000")) {
-                        // ORA-08177: Oracle Serialization
-                        status = TransactionStatus.RETRY;
-                        continue;
-                        
-                    // ------------------
-                    // DB2
-                    // ------------------
-                    } else if (ex.getErrorCode() == -911 && ex.getSQLState().equals("40001")) {
-                        // DB2Exception Deadlock
-                        status = TransactionStatus.RETRY;
-                        continue;
-                    } else if ((ex.getErrorCode() == 0 && ex.getSQLState().equals("57014")) ||
-                               (ex.getErrorCode() == -952 && ex.getSQLState().equals("57014"))) {
-                        // Query cancelled by benchmark because we changed
-                        // state. That's fine! We expected/caused this.
-                        status = TransactionStatus.RETRY_DIFFERENT;
-                        continue;
-                    } else if (ex.getErrorCode() == 0 && ex.getSQLState().equals("02000")) {
-                        // No results returned. That's okay, we can proceed to
-                        // a different query. But we should send out a warning,
-                        // too, since this is unusual.
-                        status = TransactionStatus.RETRY_DIFFERENT;
-                        continue;
-
-                    // ------------------
-                    // UNKNOWN!
-                    // ------------------
-                    } else {
-                        // UNKNOWN: In this case .. Retry as well!
-                        LOG.warn("The DBMS rejected the transaction without an error code", ex);
-                        continue;
-                        // FIXME Disable this for now
-                        // throw ex;
+                    if (this.wrkld.getDBType().shouldUseTransactions()) {
+                        if (savepoint != null) {
+                            this.conn.rollback(savepoint);
+                        } else {
+                            this.conn.rollback();
+                        }
                     }
+
+                    // Use lookup table for fast exception handling
+                    if (SQLExceptionHandler.shouldThrow(ex)) {
+                        throw ex;
+                    }
+
+                    TransactionStatus handledStatus = SQLExceptionHandler.handleException(ex);
+                    if (handledStatus != null) {
+                        status = handledStatus;
+                        continue;
+                    }
+
+                    // Default: retry for unknown errors
+                    LOG.warn("The DBMS rejected the transaction without a recognized error code", ex);
+                    continue;
                 // Assertion Error
                 } catch (Error ex) {
                     LOG.error("Fatal error when invoking " + next, ex);
