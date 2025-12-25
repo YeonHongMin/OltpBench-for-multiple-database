@@ -1,0 +1,21 @@
+{
+ "Benchmark Type": "tpcc",
+ "Current Timestamp (milliseconds)": 1766626556699,
+ "DBMS Type": "oracle",
+ "DBMS Version": "19.24",
+ "Latency Distribution": {
+  "Minimum Latency (milliseconds)": 2237.107,
+  "25th Percentile Latency (milliseconds)": 10008.096,
+  "Median Latency (milliseconds)": 10013.9,
+  "Average Latency (milliseconds)": 9874.817399521595,
+  "75th Percentile Latency (milliseconds)": 10020.013,
+  "90th Percentile Latency (milliseconds)": 10026.723,
+  "95th Percentile Latency (milliseconds)": 10056.255,
+  "99th Percentile Latency (milliseconds)": 10086.441,
+  "Maximum Latency (milliseconds)": 10770.936
+ },
+ "Throughput (requests/second)": 206.69398850063908,
+ "isolation": "TRANSACTION_READ_COMMITTED",
+ "scalefactor": "10",
+ "terminals": "4"
+}

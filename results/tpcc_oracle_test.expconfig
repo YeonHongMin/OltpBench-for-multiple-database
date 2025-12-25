@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<configuration>
+    <terminals>4</terminals>
+    <works>
+        <work>
+            <time>180</time>
+            <rate>1000</rate>
+            <weights>45</weights>
+            <weights>43</weights>
+            <weights>4</weights>
+            <weights>4</weights>
+            <weights>4</weights>
+        </work>
+    </works>
+    <scalefactor>10</scalefactor>
+    <dialect>config/oracle-dialects.xml</dialect>
+    <isolation>TRANSACTION_READ_COMMITTED</isolation>
+    <transactiontypes>
+        <transactiontype>
+            <name>NewOrder</name>
+            <id>1</id>
+        </transactiontype>
+        <transactiontype>
+            <name>Payment</name>
+            <id>2</id>
+        </transactiontype>
+        <transactiontype>
+            <name>OrderStatus</name>
+            <id>3</id>
+        </transactiontype>
+        <transactiontype>
+            <name>Delivery</name>
+            <id>4</id>
+        </transactiontype>
+        <transactiontype>
+            <name>StockLevel</name>
+            <id>5</id>
+        </transactiontype>
+    </transactiontypes>
+</configuration>
