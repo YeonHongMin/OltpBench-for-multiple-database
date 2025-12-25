@@ -2,7 +2,7 @@
 <parameters>
     <!-- Connection details -->
     <dbtype>mysql</dbtype>
-    <driver>com.mysql.jdbc.Driver</driver>
+    <driver>com.mysql.cj.jdbc.Driver</driver>
     <DBUrl>jdbc:mysql://server:3306/jpab</DBUrl>
     <username>user</username>
     <password>password</password>

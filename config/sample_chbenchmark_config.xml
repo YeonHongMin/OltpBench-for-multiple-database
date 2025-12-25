@@ -3,7 +3,7 @@
 
 	<!-- Connection details -->
     <dbtype>mysql</dbtype>
-    <driver>com.mysql.jdbc.Driver</driver>
+    <driver>com.mysql.cj.jdbc.Driver</driver>
     <DBUrl>jdbc:mysql://localhost:3306/chbenchmark</DBUrl>
     <username>root</username>
     <password></password>

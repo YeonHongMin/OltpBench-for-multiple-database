@@ -36,10 +36,10 @@ public enum DatabaseType {
      * (4) Does this DBMS support "real" transactions?
      */
     DB2("com.ibm.db2.jcc.DB2Driver", true, false, true),
-    MYSQL("com.mysql.jdbc.Driver", true, false, true),
-    MYROCKS("com.mysql.jdbc.Driver", true, false, true),
+    MYSQL("com.mysql.cj.jdbc.Driver", true, false, true),
+    MYROCKS("com.mysql.cj.jdbc.Driver", true, false, true),
     POSTGRES("org.postgresql.Driver", false, false, true),
-    ORACLE("oracle.jdbc.driver.OracleDriver", true, false, true),
+    ORACLE("oracle.jdbc.OracleDriver", true, false, true),
     SQLSERVER("com.microsoft.sqlserver.jdbc.SQLServerDriver", true, false, true),
     SQLITE("org.sqlite.JDBC", true, false, true),
     AMAZONRDS(null, true, false, true),
@@ -51,7 +51,7 @@ public enum DatabaseType {
     NUODB("com.nuodb.jdbc.Driver", true, false, true),
     TIMESTEN("com.timesten.jdbc.TimesTenDriver", true, false, true),
     CASSANDRA("com.github.adejanovski.cassandra.jdbc.CassandraDriver", true, true, false),
-    MEMSQL("com.mysql.jdbc.Driver", true, false, false),
+    MEMSQL("com.mysql.cj.jdbc.Driver", true, false, false),
     NOISEPAGE("org.postgresql.Driver", false, false, true),
     TIBERO("com.tmax.tibero.jdbc.TbDriver", true, false, true),
     ;

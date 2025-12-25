@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <parameters>
     <dbtype>oracle</dbtype>
-    <driver>oracle.jdbc.driver.OracleDriver</driver>
+    <driver>oracle.jdbc.OracleDriver</driver>
     <DBUrl>jdbc:oracle:thin:@192.168.0.172:1521:DEV</DBUrl>
     <username>app</username>
     <password>app</password>

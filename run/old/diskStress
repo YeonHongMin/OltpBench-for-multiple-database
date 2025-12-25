@@ -3,4 +3,4 @@ host=localhost
 db=diskstress
 numterminal=50
 
-java -cp `./classpath.sh` -Ddriver=com.mysql.jdbc.Driver -Dconn=jdbc:mysql://$host:$port/$db  -Duser=root -Dpassword= -Dprop=installTPCC_SET/$db client.DiskStresserRateLimited $numterminal
+java -cp `./classpath.sh` -Ddriver=com.mysql.cj.jdbc.Driver -Dconn=jdbc:mysql://$host:$port/$db  -Duser=root -Dpassword= -Dprop=installTPCC_SET/$db client.DiskStresserRateLimited $numterminal

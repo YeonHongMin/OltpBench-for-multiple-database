@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <parameters>
-    <driver>com.mysql.jdbc.Driver</driver>
+    <driver>com.mysql.cj.jdbc.Driver</driver>
     <DBUrl>jdbc:mysql://vise4:3400/wiki100k</DBUrl>
     <DBName>wiki100k</DBName>
     <username>root</username>
