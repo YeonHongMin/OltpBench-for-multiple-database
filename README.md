@@ -2,6 +2,8 @@
 
 **Version: 0.2**
 
+DownLoad Link (Google Drive) : https://drive.google.com/file/d/1cVo9pK5rrbgu-f-AHFVDZW_5ID2icRlk/view?usp=sharing
+
 기존 OltpBench가 BenchBase으로 옮겨졌으나 기존 OltpBench의 기능을 유지하기 위해 이 프로젝트를 진행합니다. 특히, Multi-Database에 대한 지원을 추가하기 위해 이 프로젝트를 진행합니다.
 Connection Polling 기능을 추가하여 어떤 에러가 발생해도 재접속 하도록 변경하였습니다.
 
